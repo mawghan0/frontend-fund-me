@@ -1,0 +1,1 @@
+This repository is a platform to interact with blockchain on hardhat-fund-me repo
