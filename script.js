@@ -3,9 +3,11 @@ import { abi, contractAddress } from "./constants.js";
 
 const connectButton = document.getElementById("connectButton");
 const fundButton = document.getElementById("fundButton");
+const balanceButton = document.getElementById("balanceButton");
 
 connectButton.onclick = connect;
 fundButton.onclick = fund;
+balanceButton.onclick = getBalance;
 
 const accounts = await window.ethereum.request({ method: 'eth_accounts' });
 if (accounts.length !== 0) {
@@ -23,10 +25,10 @@ async function connect() {
 }
 
 async function fund() {
-  const provider = new ethers.BrowserProvider(window.ethereum);
-  const signer = await provider.getSigner();
-  const ethAmount = document.getElementById("fundInput").value;
-  if (signer) {
+  if (accounts.length !== 0) {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const ethAmount = document.getElementById("fundInput").value;
     const contract = new ethers.Contract(contractAddress, abi, signer);
     try {
       const transactionResponse = await contract.fund({ value: ethers.parseEther(ethAmount) });
@@ -38,6 +40,15 @@ async function fund() {
   } else {
     connect();
   }
+}
+
+async function getBalance() {
+  if (accounts.length !== 0) {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const balance = await provider.getBalance(contractAddress);
+    console.log(ethers.formatEther(balance) + " eth");
+  }
+
 }
 
 function listenForTransactionMine(transactionResponse, provider) {
