@@ -9,14 +9,14 @@ fundButton.onclick = fund;
 
 const accounts = await window.ethereum.request({ method: 'eth_accounts' });
 if (accounts.length !== 0) {
-  connectButton.innerHTML = "Connected";
+  connectButton.innerHTML = accounts[0];
 }
 
 async function connect() {
   if (typeof window.ethereum !== "undefined") {
     await window.ethereum.request({ method: "eth_requestAccounts" });
     // console.log("metamask connected");
-    connectButton.innerHTML = "Connected";
+    connectButton.innerHTML = accounts[0];
   } else {
     alert("Metamask is not installed");
   }
@@ -25,19 +25,27 @@ async function connect() {
 async function fund() {
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
-  const ethAmount = "0.1"
+  const ethAmount = document.getElementById("fundInput").value;
   if (signer) {
     const contract = new ethers.Contract(contractAddress, abi, signer);
     try {
       const transactionResponse = await contract.fund({ value: ethers.parseEther(ethAmount) });
-      const receipt = await transactionResponse.wait();
-      if (receipt) {
-        alert(`Fund Success with tx: ${receipt.hash}`)
-      }
+      await listenForTransactionMine(transactionResponse, provider);
+      console.log("done")
     } catch (err) {
       console.log(err)
     }
   } else {
     connect();
   }
+}
+
+function listenForTransactionMine(transactionResponse, provider) {
+  console.log(`Mining ${transactionResponse.hash}...`);
+  return new Promise((resolve, reject) => {
+    provider.once(transactionResponse.hash, (transactionReceipt) => {
+      console.log(`Completed with ${transactionReceipt.status} confirmations`);
+      resolve();
+    })
+  })
 }
